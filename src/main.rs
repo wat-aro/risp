@@ -1,3 +1,5 @@
+mod value;
+
 use std::{
     error::Error,
     io::{self, stdout, Write},
