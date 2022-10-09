@@ -1,10 +1,10 @@
-mod value;
+mod expr;
 
 use std::{error::Error, io};
 
-use value::{Value, Value::Integer};
+use expr::{Expr, Expr::Integer};
 
-pub fn read() -> Result<Value, Box<dyn Error>> {
+pub fn read() -> Result<Expr, Box<dyn Error>> {
     let mut buffer = String::new();
     let stdin = io::stdin();
     stdin.read_line(&mut buffer)?;

@@ -1,19 +1,19 @@
 use std::fmt::Display;
 
 #[derive(Debug)]
-pub enum Value {
+pub enum Expr {
     Integer(i64),
 }
 
-impl Display for Value {
+impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Value::Integer(n) => write!(f, "{}", n),
+            Self::Integer(n) => write!(f, "{}", n),
         }
     }
 }
 
-impl PartialEq for Value {
+impl PartialEq for Expr {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Integer(l0), Self::Integer(r0)) => l0 == r0,
@@ -23,7 +23,7 @@ impl PartialEq for Value {
 
 #[cfg(test)]
 mod tests {
-    use super::Value::*;
+    use super::Expr::Integer;
     use std::fmt::Write;
 
     #[test]
