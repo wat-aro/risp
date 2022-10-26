@@ -1,9 +1,11 @@
 mod expr;
+mod parse;
 
 use std::io;
 
 use anyhow::{bail, Result};
-use expr::{Expr, Expr::Integer};
+use expr::Expr;
+use parse::parse;
 
 pub fn read() -> Result<Expr> {
     let mut buffer = String::new();
@@ -14,8 +16,7 @@ pub fn read() -> Result<Expr> {
                 // EOF given
                 bail!("EOF");
             } else {
-                let integer = buffer.trim().parse::<i64>()?;
-                Ok(Integer(integer))
+                parse(buffer.trim().to_string())
             }
         }
         Err(e) => bail!(e),
