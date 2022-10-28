@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.65"
+#anyhow = { version = "1.0.65", features = ["backtrace"] }
 nix = "0.25.0"

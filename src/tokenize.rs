@@ -3,6 +3,8 @@ use anyhow::{bail, Context, Result};
 #[derive(PartialEq, Eq, Debug)]
 pub enum Token {
     Integer(String),
+    Quote,
+    Identifier(String),
 }
 
 pub fn tokenize(input: String) -> Result<Vec<Token>> {
@@ -24,6 +26,8 @@ impl Tokenizer {
         let mut tokens = vec![];
         while let Ok(token) = self
             .read_integer()
+            .or_else(|_| self.read_quote())
+            .or_else(|_| self.read_identifier())
             .with_context(|| format!("Unknown token: {:?}", self.next_char()))
         {
             tokens.push(token)
@@ -42,8 +46,33 @@ impl Tokenizer {
         }
     }
 
+    fn read_quote(&mut self) -> Result<Token> {
+        let c = self.next_char().context("EOF")?;
+        match c {
+            '\'' => {
+                self.consume();
+                Ok(Token::Quote)
+            }
+            _ => bail!("Not ascii"),
+        }
+    }
+
+    fn read_identifier(&mut self) -> Result<Token> {
+        let c = self.next_char().context("EOF")?;
+        c.is_alphabetic()
+            .then(|| self.consume_while(|c| c.is_alphabetic()))
+            .map(Token::Identifier)
+            .context("Not identifier")
+    }
+
     fn next_char(&self) -> Option<char> {
         self.input[self.pos..].chars().next()
+    }
+
+    fn consume(&mut self) -> Option<char> {
+        let result = self.next_char()?;
+        self.pos += 1;
+        Some(result)
     }
 
     fn consume_while<F>(&mut self, test: F) -> String
@@ -68,6 +97,17 @@ mod tests {
         let result = Tokenizer::new("123".to_string()).tokenize()?;
 
         assert_eq!(result, vec![Token::Integer("123".to_string())]);
+        Ok(())
+    }
+
+    #[test]
+    fn tokenize_quote() -> Result<()> {
+        let result = Tokenizer::new("'atom".to_string()).tokenize()?;
+
+        assert_eq!(
+            result,
+            vec![Token::Quote, Token::Identifier("atom".to_string())]
+        );
         Ok(())
     }
 }

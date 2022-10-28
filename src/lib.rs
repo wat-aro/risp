@@ -8,7 +8,7 @@ use anyhow::{bail, Result};
 use expr::Expr;
 use parse::parse;
 
-pub fn read() -> Result<Expr> {
+pub fn read() -> Result<Vec<Expr>> {
     let mut buffer = String::new();
     let stdin = io::stdin();
     match stdin.read_line(&mut buffer) {
@@ -24,10 +24,10 @@ pub fn read() -> Result<Expr> {
     }
 }
 
-pub fn eval(expr: Expr) -> Expr {
-    expr
+pub fn eval(expr: &Expr) -> Result<Expr> {
+    Ok(expr.clone())
 }
 
-pub fn print_expr(expr: Expr) {
+pub fn print_expr(expr: &Expr) {
     println!("{}", expr);
 }

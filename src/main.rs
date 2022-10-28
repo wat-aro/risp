@@ -11,8 +11,10 @@ fn main() -> Result<()> {
     if let Ok(true) = isatty(STDIN_FILENO) {
         read_eval_print_loop()?;
     } else {
-        let expr = read()?;
-        eval(expr);
+        let exprs = read()?;
+        exprs
+            .iter()
+            .for_each(|expr| eval(expr).iter().for_each(print_expr));
     }
     Ok(())
 }
@@ -23,10 +25,9 @@ fn read_eval_print_loop() -> Result<()> {
 
     loop {
         match read() {
-            Ok(expr) => {
-                let expr = eval(expr);
-                print_expr(expr);
-            }
+            Ok(exprs) => exprs.iter().for_each(|expr| {
+                eval(expr).iter().for_each(print_expr);
+            }),
             Err(ref error) if error.to_string() == "EOF" => {
                 exit(1);
             }
