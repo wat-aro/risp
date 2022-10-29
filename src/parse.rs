@@ -38,38 +38,69 @@ impl Parser {
     }
 
     fn parse_expression(&mut self) -> Result<Expr> {
-        match self.input.get(self.pos) {
+        match self.consume() {
             Some(token) => match token {
-                Token::Integer(int) => {
-                    self.pos += 1;
+                Token::Number(int) => {
                     let integer: i64 = int.chars().fold(0i64, |acc, c| {
                         acc * 10 + (c.to_digit(10u32).unwrap() as i64)
                     });
-                    Ok(Expr::Integer(integer))
+
+                    if matches!(self.next_token(), Some(Token::Dot)) {
+                        self.consume();
+                        if let Some(Token::Number(num)) =
+                            self.consume_if(|token| matches!(token, Token::Number(_)))
+                        {
+                            let fractional_part =
+                                (1i64..).zip(num.chars()).fold(0f64, |acc, (index, c)| {
+                                    acc + c.to_digit(10).unwrap() as f64
+                                        * 10f64.powf(-1.0 * index as f64)
+                                });
+                            Ok(Expr::Float(integer as f64 + fractional_part))
+                        } else {
+                            Ok(Expr::Float(integer as f64))
+                        }
+                    } else {
+                        Ok(Expr::Integer(integer))
+                    }
                 }
-                Token::Quote => match self.next_token() {
+                Token::Quote => match self.consume() {
                     Some(token) => match token {
                         Token::Identifier(identifier) => {
                             let atom = Expr::Atom(identifier.clone());
-                            self.pos += 2;
                             Ok(atom)
                         }
                         _ => bail!("Not atom"),
                     },
                     None => bail!("Unterminated quote"),
                 },
-                Token::WhiteSpace => {
-                    self.pos += 1;
-                    self.parse_expression()
-                }
-                _ => bail!("Not integer"),
+                Token::WhiteSpace => self.parse_expression(),
+                _ => Err(anyhow!("Unknown token: {:?}", token)),
             },
             None => bail!("EOF"),
         }
     }
 
     fn next_token(&self) -> Option<&Token> {
-        self.input.get(self.pos + 1)
+        self.input.get(self.pos)
+    }
+
+    fn consume(&mut self) -> Option<&Token> {
+        let next_token = self.input.get(self.pos);
+        self.pos += 1;
+        next_token
+    }
+
+    fn consume_if<F>(&mut self, test: F) -> Option<&Token>
+    where
+        F: Fn(&Token) -> bool,
+    {
+        let next_token = self.input.get(self.pos)?;
+        if test(next_token) {
+            self.pos += 1;
+            Some(next_token)
+        } else {
+            None
+        }
     }
 }
 
@@ -98,6 +129,22 @@ mod tests {
         let result = parse("'atom".to_string())?;
 
         assert_eq!(result, vec![Expr::Atom("atom".to_string())]);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_float() -> Result<()> {
+        let result = parse("123.456".to_string())?;
+
+        assert_eq!(result, vec![Expr::Float(123.456)]);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_lack_float() -> Result<()> {
+        let result = parse("123. 3".to_string())?;
+
+        assert_eq!(result, vec![Expr::Float(123.0), Expr::Integer(3)]);
         Ok(())
     }
 }
