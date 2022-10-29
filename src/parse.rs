@@ -40,15 +40,15 @@ impl Parser {
     fn parse_expression(&mut self) -> Result<Expr> {
         match self.consume() {
             Some(token) => match token {
-                Token::Integer(int) => {
+                Token::Number(int) => {
                     let integer: i64 = int.chars().fold(0i64, |acc, c| {
                         acc * 10 + (c.to_digit(10u32).unwrap() as i64)
                     });
 
                     if matches!(self.next_token(), Some(Token::Dot)) {
                         self.consume();
-                        if let Some(Token::Integer(num)) =
-                            self.consume_if(|token| matches!(token, Token::Integer(_)))
+                        if let Some(Token::Number(num)) =
+                            self.consume_if(|token| matches!(token, Token::Number(_)))
                         {
                             let fractional_part =
                                 (1i64..).zip(num.chars()).fold(0f64, |acc, (index, c)| {

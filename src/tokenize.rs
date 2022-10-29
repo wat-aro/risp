@@ -2,7 +2,7 @@ use anyhow::{bail, Context, Result};
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum Token {
-    Integer(String),
+    Number(String),
     Quote,
     Identifier(String),
     WhiteSpace,
@@ -27,7 +27,7 @@ impl Tokenizer {
     fn tokenize(&mut self) -> Result<Vec<Token>> {
         let mut tokens = vec![];
         while let Ok(token) = self
-            .read_integer()
+            .read_number()
             .or_else(|_| self.read_quote())
             .or_else(|_| self.read_identifier())
             .or_else(|_| self.read_whitespace())
@@ -39,14 +39,14 @@ impl Tokenizer {
         Ok(tokens)
     }
 
-    fn read_integer(&mut self) -> Result<Token> {
+    fn read_number(&mut self) -> Result<Token> {
         let c = self.next_char().context("EOF")?;
         match c {
             '0'..='9' => {
-                let integer = self.consume_while(char::is_ascii_digit);
-                Ok(Token::Integer(integer))
+                let number = self.consume_while(char::is_ascii_digit);
+                Ok(Token::Number(number))
             }
-            _ => bail!("Not integer"),
+            _ => bail!("Not number"),
         }
     }
 
@@ -117,23 +117,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn tokenize_integer() -> Result<()> {
+    fn tokenize_number() -> Result<()> {
         let result = tokenize("123".to_string())?;
 
-        assert_eq!(result, vec![Token::Integer("123".to_string())]);
+        assert_eq!(result, vec![Token::Number("123".to_string())]);
         Ok(())
     }
 
     #[test]
-    fn tokenize_multiple_integer() -> Result<()> {
+    fn tokenize_multiple_number() -> Result<()> {
         let result = tokenize("123 456".to_string())?;
 
         assert_eq!(
             result,
             vec![
-                Token::Integer("123".to_string()),
+                Token::Number("123".to_string()),
                 Token::WhiteSpace,
-                Token::Integer("456".to_string())
+                Token::Number("456".to_string())
             ]
         );
         Ok(())
@@ -157,9 +157,9 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                Token::Integer("123".to_string()),
+                Token::Number("123".to_string()),
                 Token::Dot,
-                Token::Integer("456".to_string())
+                Token::Number("456".to_string())
             ]
         );
         Ok(())
