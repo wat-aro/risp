@@ -58,6 +58,10 @@ impl Parser {
                     },
                     None => bail!("Unterminated quote"),
                 },
+                Token::WhiteSpace => {
+                    self.pos += 1;
+                    self.parse_expression()
+                }
                 _ => bail!("Not integer"),
             },
             None => bail!("EOF"),
@@ -78,6 +82,14 @@ mod tests {
         let result = parse("123".to_string())?;
 
         assert_eq!(result, vec![Expr::Integer(123)]);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_multiple_integer() -> Result<()> {
+        let result = parse("123 456".to_string())?;
+
+        assert_eq!(result, vec![Expr::Integer(123), Expr::Integer(456)]);
         Ok(())
     }
 
