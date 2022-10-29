@@ -6,6 +6,7 @@ pub enum Token {
     Quote,
     Identifier(String),
     WhiteSpace,
+    Dot,
 }
 
 pub fn tokenize(input: String) -> Result<Vec<Token>> {
@@ -30,6 +31,7 @@ impl Tokenizer {
             .or_else(|_| self.read_quote())
             .or_else(|_| self.read_identifier())
             .or_else(|_| self.read_whitespace())
+            .or_else(|_| self.read_dot())
             .with_context(|| format!("Unknown token: {:?}", self.next_char()))
         {
             tokens.push(token)
@@ -74,6 +76,16 @@ impl Tokenizer {
             Ok(Token::WhiteSpace)
         } else {
             bail!("Not whitespace");
+        }
+    }
+
+    fn read_dot(&mut self) -> Result<Token> {
+        let c = self.next_char().context("EOF")?;
+        if c == '.' {
+            self.pos += 1;
+            Ok(Token::Dot)
+        } else {
+            bail!("Not dot");
         }
     }
 
@@ -134,6 +146,21 @@ mod tests {
         assert_eq!(
             result,
             vec![Token::Quote, Token::Identifier("atom".to_string())]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn tokenize_float() -> Result<()> {
+        let result = tokenize("123.456".to_string())?;
+
+        assert_eq!(
+            result,
+            vec![
+                Token::Integer("123".to_string()),
+                Token::Dot,
+                Token::Integer("456".to_string())
+            ]
         );
         Ok(())
     }

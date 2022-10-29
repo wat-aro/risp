@@ -4,6 +4,7 @@ use std::fmt::Display;
 pub enum Expr {
     Atom(String),
     Integer(i64),
+    Float(f64),
 }
 
 impl Display for Expr {
@@ -11,6 +12,7 @@ impl Display for Expr {
         match self {
             Self::Atom(str) => write!(f, "{}", str),
             Self::Integer(n) => write!(f, "{}", n),
+            Self::Float(float) => write!(f, "{}.{}", float.trunc(), float.fract()),
         }
     }
 }
@@ -20,6 +22,7 @@ impl PartialEq for Expr {
         match (self, other) {
             (Self::Atom(left), Self::Atom(right)) => left == right,
             (Self::Integer(left), Self::Integer(right)) => left == right,
+            (Self::Float(left), Self::Float(right)) => left == right,
             _ => false,
         }
     }
