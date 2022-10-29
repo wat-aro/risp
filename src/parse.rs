@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Result};
 
 use crate::{
     expr::Expr,
@@ -42,9 +42,10 @@ impl Parser {
             Some(token) => match token {
                 Token::Integer(int) => {
                     self.pos += 1;
-                    int.parse::<i64>()
-                        .context("Failed parse integer")
-                        .map(Expr::Integer)
+                    let integer: i64 = int.chars().fold(0i64, |acc, c| {
+                        acc * 10 + (c.to_digit(10u32).unwrap() as i64)
+                    });
+                    Ok(Expr::Integer(integer))
                 }
                 Token::Quote => match self.next_token() {
                     Some(token) => match token {
@@ -57,6 +58,10 @@ impl Parser {
                     },
                     None => bail!("Unterminated quote"),
                 },
+                Token::WhiteSpace => {
+                    self.pos += 1;
+                    self.parse_expression()
+                }
                 _ => bail!("Not integer"),
             },
             None => bail!("EOF"),
@@ -77,6 +82,14 @@ mod tests {
         let result = parse("123".to_string())?;
 
         assert_eq!(result, vec![Expr::Integer(123)]);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_multiple_integer() -> Result<()> {
+        let result = parse("123 456".to_string())?;
+
+        assert_eq!(result, vec![Expr::Integer(123), Expr::Integer(456)]);
         Ok(())
     }
 

@@ -5,6 +5,7 @@ pub enum Token {
     Integer(String),
     Quote,
     Identifier(String),
+    WhiteSpace,
 }
 
 pub fn tokenize(input: String) -> Result<Vec<Token>> {
@@ -28,6 +29,7 @@ impl Tokenizer {
             .read_integer()
             .or_else(|_| self.read_quote())
             .or_else(|_| self.read_identifier())
+            .or_else(|_| self.read_whitespace())
             .with_context(|| format!("Unknown token: {:?}", self.next_char()))
         {
             tokens.push(token)
@@ -65,6 +67,16 @@ impl Tokenizer {
             .context("Not identifier")
     }
 
+    fn read_whitespace(&mut self) -> Result<Token> {
+        let c = self.next_char().context("EOF")?;
+        if c == ' ' {
+            self.pos += 1;
+            Ok(Token::WhiteSpace)
+        } else {
+            bail!("Not whitespace");
+        }
+    }
+
     fn next_char(&self) -> Option<char> {
         self.input[self.pos..].chars().next()
     }
@@ -94,15 +106,30 @@ mod tests {
 
     #[test]
     fn tokenize_integer() -> Result<()> {
-        let result = Tokenizer::new("123".to_string()).tokenize()?;
+        let result = tokenize("123".to_string())?;
 
         assert_eq!(result, vec![Token::Integer("123".to_string())]);
         Ok(())
     }
 
     #[test]
+    fn tokenize_multiple_integer() -> Result<()> {
+        let result = tokenize("123 456".to_string())?;
+
+        assert_eq!(
+            result,
+            vec![
+                Token::Integer("123".to_string()),
+                Token::WhiteSpace,
+                Token::Integer("456".to_string())
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
     fn tokenize_quote() -> Result<()> {
-        let result = Tokenizer::new("'atom".to_string()).tokenize()?;
+        let result = tokenize("'atom".to_string())?;
 
         assert_eq!(
             result,
