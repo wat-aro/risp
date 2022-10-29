@@ -72,7 +72,7 @@ impl Tokenizer {
     fn read_whitespace(&mut self) -> Result<Token> {
         let c = self.next_char().context("EOF")?;
         if c == ' ' {
-            self.pos += 1;
+            self.consume();
             Ok(Token::WhiteSpace)
         } else {
             bail!("Not whitespace");
@@ -82,7 +82,7 @@ impl Tokenizer {
     fn read_dot(&mut self) -> Result<Token> {
         let c = self.next_char().context("EOF")?;
         if c == '.' {
-            self.pos += 1;
+            self.consume();
             Ok(Token::Dot)
         } else {
             bail!("Not dot");
