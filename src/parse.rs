@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, Context, Result};
 
 use crate::{
     expr::Expr,
@@ -74,7 +74,19 @@ impl Parser {
                     None => bail!("Unterminated quote"),
                 },
                 Token::WhiteSpace => self.parse_expression(),
-                _ => Err(anyhow!("Unknown token: {:?}", token)),
+                Token::Sharp => {
+                    let token = self.consume().context("EOF")?;
+                    if let Token::Identifier(b) = token {
+                        match &**b {
+                            "t" => Ok(Expr::Bool(true)),
+                            "f" => Ok(Expr::Bool(false)),
+                            _ => Err(anyhow!("Invalid #-token: {}", token)),
+                        }
+                    } else {
+                        Err(anyhow!("Invalid #-token: {}", token))
+                    }
+                }
+                _ => Err(anyhow!("Unknown token: {}", token)),
             },
             None => bail!("EOF"),
         }
@@ -145,6 +157,22 @@ mod tests {
         let result = parse("123. 3".to_string())?;
 
         assert_eq!(result, vec![Expr::Float(123.0), Expr::Integer(3)]);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_true() -> Result<()> {
+        let result = parse("#t".to_string())?;
+
+        assert_eq!(result, vec![Expr::Bool(true)]);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_false() -> Result<()> {
+        let result = parse("#f".to_string())?;
+
+        assert_eq!(result, vec![Expr::Bool(false)]);
         Ok(())
     }
 }

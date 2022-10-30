@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use anyhow::{bail, Context, Result};
 
 #[derive(PartialEq, Eq, Debug)]
@@ -7,6 +9,21 @@ pub enum Token {
     Identifier(String),
     WhiteSpace,
     Dot,
+    Sharp,
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let token = match self {
+            Token::Number(num) => num.to_string(),
+            Token::Quote => "quote".to_string(),
+            Token::Identifier(identifier) => identifier.to_string(),
+            Token::WhiteSpace => "space".to_string(),
+            Token::Dot => "dot".to_string(),
+            Token::Sharp => "sharp".to_string(),
+        };
+        write!(f, "{}", token)
+    }
 }
 
 pub fn tokenize(input: String) -> Result<Vec<Token>> {
@@ -32,6 +49,7 @@ impl Tokenizer {
             .or_else(|_| self.read_identifier())
             .or_else(|_| self.read_whitespace())
             .or_else(|_| self.read_dot())
+            .or_else(|_| self.read_sharp())
             .with_context(|| format!("Unknown token: {:?}", self.next_char()))
         {
             tokens.push(token)
@@ -72,7 +90,7 @@ impl Tokenizer {
     fn read_whitespace(&mut self) -> Result<Token> {
         let c = self.next_char().context("EOF")?;
         if c == ' ' {
-            self.pos += 1;
+            self.consume();
             Ok(Token::WhiteSpace)
         } else {
             bail!("Not whitespace");
@@ -82,10 +100,20 @@ impl Tokenizer {
     fn read_dot(&mut self) -> Result<Token> {
         let c = self.next_char().context("EOF")?;
         if c == '.' {
-            self.pos += 1;
+            self.consume();
             Ok(Token::Dot)
         } else {
             bail!("Not dot");
+        }
+    }
+
+    fn read_sharp(&mut self) -> Result<Token> {
+        let c = self.next_char().context("EOF")?;
+        if c == '#' {
+            self.consume();
+            Ok(Token::Sharp)
+        } else {
+            bail!("Not sharp");
         }
     }
 
@@ -161,6 +189,17 @@ mod tests {
                 Token::Dot,
                 Token::Number("456".to_string())
             ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn tokenize_bool() -> Result<()> {
+        let result = tokenize("#t".to_string())?;
+
+        assert_eq!(
+            result,
+            vec![Token::Sharp, Token::Identifier("t".to_string())]
         );
         Ok(())
     }
