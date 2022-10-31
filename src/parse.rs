@@ -69,7 +69,7 @@ impl Parser {
                             let atom = Expr::Atom(identifier.clone());
                             Ok(atom)
                         }
-                        _ => bail!("Not atom"),
+                        _ => Err(anyhow!("Not atom: {}", token)),
                     },
                     None => bail!("Unterminated quote"),
                 },
