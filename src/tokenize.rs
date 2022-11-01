@@ -9,7 +9,7 @@ pub enum Token {
     Identifier(String),
     WhiteSpace,
     Dot,
-    Sharp,
+    Bool(bool),
 }
 
 impl Display for Token {
@@ -20,7 +20,13 @@ impl Display for Token {
             Token::Identifier(identifier) => identifier.to_string(),
             Token::WhiteSpace => "space".to_string(),
             Token::Dot => "dot".to_string(),
-            Token::Sharp => "sharp".to_string(),
+            Token::Bool(b) => {
+                if *b {
+                    "true".to_string()
+                } else {
+                    "false".to_string()
+                }
+            }
         };
         write!(f, "{}", token)
     }
@@ -49,7 +55,7 @@ impl Tokenizer {
             .or_else(|_| self.read_identifier())
             .or_else(|_| self.read_whitespace())
             .or_else(|_| self.read_dot())
-            .or_else(|_| self.read_sharp())
+            .or_else(|_| self.read_bool())
             .with_context(|| format!("Unknown token: {:?}", self.next_char()))
         {
             tokens.push(token)
@@ -107,13 +113,13 @@ impl Tokenizer {
         }
     }
 
-    fn read_sharp(&mut self) -> Result<Token> {
-        let c = self.next_char().context("EOF")?;
-        if c == '#' {
-            self.consume();
-            Ok(Token::Sharp)
+    fn read_bool(&mut self) -> Result<Token> {
+        if self.equal("#t") || self.equal("#true") {
+            Ok(Token::Bool(true))
+        } else if self.equal("#f") || self.equal("#false") {
+            Ok(Token::Bool(false))
         } else {
-            bail!("Not sharp");
+            bail!("Not bool");
         }
     }
 
@@ -137,6 +143,16 @@ impl Tokenizer {
             result.push(c);
         }
         result
+    }
+
+    fn equal(&mut self, target: &str) -> bool {
+        let length = target.len();
+        if target == &self.input[self.pos..(self.pos + length).min(self.input.len())] {
+            self.pos += length;
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -197,10 +213,7 @@ mod tests {
     fn tokenize_bool() -> Result<()> {
         let result = tokenize("#t".to_string())?;
 
-        assert_eq!(
-            result,
-            vec![Token::Sharp, Token::Identifier("t".to_string())]
-        );
+        assert_eq!(result, vec![Token::Bool(true)]);
         Ok(())
     }
 }

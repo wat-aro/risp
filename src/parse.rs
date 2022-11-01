@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Result};
 
 use crate::{
     expr::Expr,
@@ -74,18 +74,7 @@ impl Parser {
                     None => bail!("Unterminated quote"),
                 },
                 Token::WhiteSpace => self.parse_expression(),
-                Token::Sharp => {
-                    let token = self.consume().context("EOF")?;
-                    if let Token::Identifier(b) = token {
-                        match &**b {
-                            "t" => Ok(Expr::Bool(true)),
-                            "f" => Ok(Expr::Bool(false)),
-                            _ => Err(anyhow!("Invalid #-token: {}", token)),
-                        }
-                    } else {
-                        Err(anyhow!("Invalid #-token: {}", token))
-                    }
-                }
+                Token::Bool(b) => Ok(Expr::Bool(*b)),
                 _ => Err(anyhow!("Unknown token: {}", token)),
             },
             None => bail!("EOF"),
