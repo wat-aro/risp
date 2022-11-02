@@ -6,6 +6,7 @@ pub enum Expr {
     Integer(i64),
     Float(f64),
     Bool(bool),
+    String(String),
 }
 
 impl Display for Expr {
@@ -15,6 +16,7 @@ impl Display for Expr {
             Self::Integer(n) => write!(f, "{}", n),
             Self::Float(float) => write!(f, "{}.{}", float.trunc(), float.fract()),
             Self::Bool(b) => write!(f, "{}", if *b { "#t" } else { "#f" }),
+            Self::String(content) => write!(f, "{}", content),
         }
     }
 }
@@ -26,6 +28,7 @@ impl PartialEq for Expr {
             (Self::Integer(left), Self::Integer(right)) => left == right,
             (Self::Float(left), Self::Float(right)) => left == right,
             (Self::Bool(left), Self::Bool(right)) => left == right,
+            (Self::String(left), Self::String(right)) => left == right,
             _ => false,
         }
     }

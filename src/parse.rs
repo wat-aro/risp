@@ -75,6 +75,7 @@ impl Parser {
                 },
                 Token::WhiteSpace => self.parse_expression(),
                 Token::Bool(b) => Ok(Expr::Bool(*b)),
+                Token::String(content) => Ok(Expr::String(content.clone())),
                 _ => Err(anyhow!("Unknown token: {}", token)),
             },
             None => bail!("EOF"),
@@ -162,6 +163,14 @@ mod tests {
         let result = parse("#f".to_string())?;
 
         assert_eq!(result, vec![Expr::Bool(false)]);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_string() -> Result<()> {
+        let result = parse("\"content\"".to_string())?;
+
+        assert_eq!(result, vec![Expr::String("content".to_string())]);
         Ok(())
     }
 }

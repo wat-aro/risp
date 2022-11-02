@@ -10,6 +10,7 @@ pub enum Token {
     WhiteSpace,
     Dot,
     Bool(bool),
+    String(String),
 }
 
 impl Display for Token {
@@ -27,6 +28,7 @@ impl Display for Token {
                     "false".to_string()
                 }
             }
+            Token::String(str) => str.to_string(),
         };
         write!(f, "{}", token)
     }
@@ -56,6 +58,7 @@ impl Tokenizer {
             .or_else(|_| self.read_whitespace())
             .or_else(|_| self.read_dot())
             .or_else(|_| self.read_bool())
+            .or_else(|_| self.read_string())
             .with_context(|| format!("Unknown token: {:?}", self.next_char()))
         {
             tokens.push(token)
@@ -120,6 +123,18 @@ impl Tokenizer {
             Ok(Token::Bool(false))
         } else {
             bail!("Not bool");
+        }
+    }
+
+    fn read_string(&mut self) -> Result<Token> {
+        let c = self.next_char().context("EOF")?;
+        if c == '"' {
+            self.consume();
+            let content = self.consume_while(|c| *c != '"');
+            self.consume();
+            Ok(Token::String(content))
+        } else {
+            bail!("Not a string");
         }
     }
 
@@ -214,6 +229,14 @@ mod tests {
         let result = tokenize("#t".to_string())?;
 
         assert_eq!(result, vec![Token::Bool(true)]);
+        Ok(())
+    }
+
+    #[test]
+    fn tokenize_string() -> Result<()> {
+        let result = tokenize("\"hello\"".to_string())?;
+
+        assert_eq!(result, vec![Token::String("hello".to_string())]);
         Ok(())
     }
 }
