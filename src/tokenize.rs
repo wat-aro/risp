@@ -130,9 +130,22 @@ impl Tokenizer {
         let c = self.next_char().context("EOF")?;
         if c == '"' {
             self.consume();
-            let content = self.consume_while(|c| *c != '"');
-            self.consume();
-            Ok(Token::String(content))
+            let mut string = String::new();
+            loop {
+                if self.equal("\\\"") {
+                    string.push('"');
+                } else if self.equal("\"") {
+                    break;
+                } else {
+                    match self.consume() {
+                        Some(c) => string.push(c),
+                        None => {
+                            bail!("EOF");
+                        }
+                    }
+                }
+            }
+            Ok(Token::String(string))
         } else {
             bail!("Not a string");
         }
@@ -237,6 +250,14 @@ mod tests {
         let result = tokenize("\"hello\"".to_string())?;
 
         assert_eq!(result, vec![Token::String("hello".to_string())]);
+        Ok(())
+    }
+
+    #[test]
+    fn tokenize_nested_string() -> Result<()> {
+        let result = tokenize("\"hello \\\"world\\\"\"".to_string())?;
+
+        assert_eq!(result, vec![Token::String("hello \"world\"".to_string())]);
         Ok(())
     }
 }
